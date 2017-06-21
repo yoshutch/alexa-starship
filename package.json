@@ -1,0 +1,15 @@
+{
+  "name": "alexa-starship",
+  "version": "1.0.0",
+  "description": "Alexa starship skill",
+  "main": "index.js",
+  "dependencies": {
+    "alexa-sdk": "^1.0.10"
+  },
+  "devDependencies": {},
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Scott Hutchings",
+  "license": "ISC"
+}
