@@ -1,0 +1,14 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: 'AWS::Serverless-2016-10-31'
+Description: Alexa Starship game
+Resources:
+  alexasstarshipskill:
+    Type: 'AWS::Serverless::Function'
+    Properties:
+      FunctionName: alexa-starship
+      Handler: index.handler
+      Runtime: nodejs6.10
+      CodeUri: .
+      Description: Alexa starship skill
+      MemorySize: 128
+      Timeout: 7
