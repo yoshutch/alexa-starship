@@ -1,7 +1,7 @@
 'use strict';
 
 var Alexa = require('alexa-sdk');
-var items = require('./items');
+var Items = require('./items');
 var Ship = require('./ship');
 
 var APP_ID = 'amzn1.ask.skill.d4b6ed32-b05e-4b69-a16d-609a98afbdde'; // TODO replace with your app ID (OPTIONAL).
@@ -22,12 +22,10 @@ var newSessionHandlers = {
         if (Object.keys(this.attributes).length === 0) { // check if it's the first time the skill has been invoked
 			this.attributes['endedSessionCount'] = 0;
 			this.attributes['gamesPlayed'] = 0;
-            this.attributes['my_ship'] = new Ship.Ship(50, [items.basicLaser, items.basicMissile], [items.basicShield]);
-            this.attributes['enemy_ship'] = new Ship.Ship(30, [items.basicLaser], []);
         }
         
         this.emit(':ask', 
-            'Welcome aboard the starship, captain. This is a starship battle simulation. Would you like to begin the simulation?', 
+            'Welcome aboard captain. I am the starship on-board computer. This is a starship battle simulation. Would you like to begin the simulation?',
             'Would you like to begin the starship battle simulation?');
     },
 
@@ -35,7 +33,10 @@ var newSessionHandlers = {
         if (Object.keys(this.attributes).length === 0) { // check if it's the first time the skill has been invoked
             this.emitWithState('NewSession');
         }
-        this.handler.state = states.BATTLE;
+		this.handler.state = states.BATTLE;
+		var myShip = new Ship.Ship(50, [Items.randomWeapon(), Items.randomWeapon()], [Items.basicShield]);
+		this.attributes['my_ship'] = myShip;
+		this.attributes['enemy_ship'] = new Ship.Ship(30, [Items.randomWeapon()], []);
         this.attributes['options'] = [];
         if (Ship.beamAtk(this.attributes['my_ship'])) {
             this.attributes['options'].push('Fire lasers');
@@ -48,7 +49,21 @@ var newSessionHandlers = {
         }
         this.attributes['options'].push('Scan the enemy ship');
         this.attributes['options'].push('Attempt to flee');
-        this.attributes['speechOutput'] = 'An enemy pirate ship has powered up its weapons. The enemy ship\'s hull is ' + this.attributes['enemy_ship'].hull + '. What are your orders?';
+        this.attributes['speechOutput'] = 'Our ship is equipped with ';
+        var equipped = Ship.equippedWeapons(myShip);
+		Object.keys(equipped).forEach(function(weapon, index){
+			this.attributes['speechOutput'] += equipped[weapon] + ' ' + weapon;
+			if (equipped[weapon] > 1){
+				this.attributes['speechOutput'] += 's';
+			}
+			if (index !== Object.keys(equipped).length -1) {
+				this.attributes['speechOutput'] += ', ';
+			}
+			if (index === Object.keys(equipped).length - 2) {
+				this.attributes['speechOutput'] += 'and ';
+			}
+		}.bind(this));
+		this.attributes['speechOutput'] += '. An enemy pirate ship has powered up its weapons. The enemy ship\'s hull is ' + this.attributes['enemy_ship'].hull + '. What are your orders?';
         this.attributes['repromptSpeech'] = 'If you don\'t know what to do, you can ask <s>what are my options?</s>';
         this.emit(':ask', this.attributes['speechOutput'], this.attributes['repromptSpeech']);
     },
@@ -76,8 +91,12 @@ var newSessionHandlers = {
 
 var battleHandlers = Alexa.CreateStateHandler(states.BATTLE, {
     'NewSession': function() {
-        this.handler.state = '';
-        this.emitWithState('NewSession');
+		if (Object.keys(this.attributes).length === 0){
+			this.handler.state = '';
+			this.emitWithState('NewSession');
+		} else {
+			this.emitWithState('Unhandled');
+		}
     },
 
     'BeamAttack': function() {
@@ -129,10 +148,10 @@ var battleHandlers = Alexa.CreateStateHandler(states.BATTLE, {
         this.emit('MyOptions');
     },
     'AMAZON.StopIntent': function () {
-        this.emit('SessionEndedRequest');
+        this.emitWithState('SessionEndedRequest');
     },
     'AMAZON.CancelIntent': function () {
-        this.emit('SessionEndedRequest');
+        this.emitWithState('SessionEndedRequest');
     },
 	'SessionEndedRequest': function() {
 		console.log('session ended!');
@@ -147,3 +166,4 @@ var battleHandlers = Alexa.CreateStateHandler(states.BATTLE, {
         this.emit(':ask', this.attributes['speechOutput'], this.attributes['repromptSpeech']);
     }
 });
+
