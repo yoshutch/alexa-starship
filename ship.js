@@ -22,11 +22,11 @@ var missileAtk = function (ship) {
 	}
 	return atkStr;
 };
-var particleAtk = function (ship) {
+var railGunAtk = function (ship) {
 	var atkStr = 0;
 	for (var i = 0; i < ship.weapons.length; i ++) {
-		if (ship.weapons[i].particle_atk) {
-			atkStr += ship.weapons[i].particle_atk;
+		if (ship.weapons[i].rail_atk) {
+			atkStr += ship.weapons[i].rail_atk;
 		}
 	}
 	return atkStr;
@@ -36,7 +36,7 @@ module.exports = {
 	Ship: Ship,
 	beamAtk: beamAtk,
 	missileAtk: missileAtk,
-	particleAtk: particleAtk,
+	railGunAtk: railGunAtk,
 	equippedWeapons : function(ship) {
 		var equipped = {};
 		for (var i = 0; i < ship.weapons.length; i ++) {

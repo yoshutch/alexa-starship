@@ -3,6 +3,7 @@
 var Alexa = require('alexa-sdk');
 var Items = require('./items');
 var Ship = require('./ship');
+var Battle = require('./battle');
 
 var APP_ID = 'amzn1.ask.skill.d4b6ed32-b05e-4b69-a16d-609a98afbdde'; // TODO replace with your app ID (OPTIONAL).
 
@@ -44,8 +45,8 @@ var newSessionHandlers = {
         if (Ship.missileAtk(this.attributes['my_ship'])) {
             this.attributes['options'].push('Fire missiles');
         }
-        if (Ship.particleAtk(this.attributes['my_ship'])) {
-            this.attributes['options'].push('Fire particle cannons');
+        if (Ship.railGunAtk(this.attributes['my_ship'])) {
+            this.attributes['options'].push('Fire rail guns');
         }
         this.attributes['options'].push('Scan the enemy ship');
         this.attributes['options'].push('Attempt to flee');
@@ -101,35 +102,47 @@ var battleHandlers = Alexa.CreateStateHandler(states.BATTLE, {
 
     'BeamAttack': function() {
         // check if we have beam weapons
-        if (!Ship.beamAtk(this.attributes['my_ship'])){
+		var myShip = this.attributes['my_ship'];
+		var enemyShip = this.attributes['enemy_ship'];
+		if (!Ship.beamAtk(myShip)){
             this.attributes['speechOutput'] = 'We don\'t have any beam weapons. What are your orders?';
             this.attributes['repromptSpeech'] = 'If you don\'t know what to do, you can ask <s>what are my options?</s>';
             this.emit(':ask', this.attributes['speechOutput'], this.attributes['repromptSpeech']);
         }
-        this.attributes['speechOutput'] = 'Firing beam weapons...';
+		this.attributes['speechOutput'] = Battle.resolveTurn(myShip, Battle.BEAM_TYPE, enemyShip);
+		this.attributes['my_ship'] = myShip;
+		this.attributes['enemy_ship'] = enemyShip;
         this.attributes['repromptSpeech'] = 'If you don\'t know what to do, you can ask <s>what are my options?</s>';
         this.emit(':ask', this.attributes['speechOutput'], this.attributes['repromptSpeech']);
     },
     'MissileAttack': function() {
         // check if we have missile weapons
-        if (!Ship.missileAtk(this.attributes['my_ship'])){
+		var myShip = this.attributes['my_ship'];
+		var enemyShip = this.attributes['enemy_ship'];
+		if (!Ship.missileAtk(myShip)){
             this.attributes['speechOutput'] = 'We don\'t have any missile weapons. What are your orders?';
             this.attributes['repromptSpeech'] = 'If you don\'t know what to do, you can ask <s>what are my options?</s>';
             this.emit(':ask', this.attributes['speechOutput'], this.attributes['repromptSpeech']);
         }
-        this.attributes['speechOutput'] = 'Firing missile weapons...';
-        this.attributes['repromptSpeech'] = 'If you don\'t know what to do, you can ask <s>what are my options?</s>';
+		this.attributes['speechOutput'] = Battle.resolveTurn(myShip, Battle.MISSILE_TYPE, enemyShip);
+		this.attributes['my_ship'] = myShip;
+		this.attributes['enemy_ship'] = enemyShip;
+		this.attributes['repromptSpeech'] = 'If you don\'t know what to do, you can ask <s>what are my options?</s>';
         this.emit(':ask', this.attributes['speechOutput'], this.attributes['repromptSpeech']);
     },
-    'ParticleAttack': function() {
-        //  check if we have particle weapons
-        if (!Ship.particleAtk(this.attributes['my_ship'])){
-            this.attributes['speechOutput'] = 'We don\'t have any particle cannon weapons. What are your orders?';
+    'RailGunAttack': function() {
+        //  check if we have rail gun weapons
+		var myShip = this.attributes['my_ship'];
+		var enemyShip = this.attributes['enemy_ship'];
+		if (!Ship.railGunAtk(myShip)){
+            this.attributes['speechOutput'] = 'We don\'t have any rail guns. What are your orders?';
             this.attributes['repromptSpeech'] = 'If you don\'t know what to do, you can ask <s>what are my options?</s>';
             this.emit(':ask', this.attributes['speechOutput'], this.attributes['repromptSpeech']);
         }
-        this.attributes['speechOutput'] = 'Firing particle weapons...';
-        this.attributes['repromptSpeech'] = 'If you don\'t know what to do, you can ask <s>what are my options?</s>';
+		this.attributes['speechOutput'] = Battle.resolveTurn(myShip, Battle.RAIL_GUN_TYPE, enemyShip);
+		this.attributes['my_ship'] = myShip;
+		this.attributes['enemy_ship'] = enemyShip;
+		this.attributes['repromptSpeech'] = 'If you don\'t know what to do, you can ask <s>what are my options?</s>';
         this.emit(':ask', this.attributes['speechOutput'], this.attributes['repromptSpeech']);
     },
 
@@ -166,4 +179,3 @@ var battleHandlers = Alexa.CreateStateHandler(states.BATTLE, {
         this.emit(':ask', this.attributes['speechOutput'], this.attributes['repromptSpeech']);
     }
 });
-

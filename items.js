@@ -10,9 +10,9 @@ module.exports = {
 		missile_atk: 10
 	},
 
-	basicParticleCannon : {
-		name: "Basic Particle Cannon",
-		particle_atk: 10
+	basicRailGun : {
+		name: "Basic Rail Gun",
+		rail_atk: 10
 	},
 
 	// Shields
@@ -20,7 +20,7 @@ module.exports = {
 		name: "Basic Shield",
 		beam_def: 1,
 		missile_def: 1,
-		particle_def: 1
+		rail_def: 1
 	},
 
 	// Functions
@@ -31,7 +31,7 @@ module.exports = {
 		} else if (index === 1) {
 			return this.basicMissile;
 		} else if (index === 2) {
-			return this.basicParticleCannon;
+			return this.basicRailGun;
 		}
 	}
 };
