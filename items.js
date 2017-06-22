@@ -22,5 +22,5 @@ module.exports = {
 		missile_def: 1,
 		particle_def: 1
 	}
-}
+};
 

@@ -20,6 +20,8 @@ exports.handler = function(event, context, callback) {
 var newSessionHandlers = {
     'NewSession': function() {
         if (Object.keys(this.attributes).length === 0) { // check if it's the first time the skill has been invoked
+			this.attributes['endedSessionCount'] = 0;
+			this.attributes['gamesPlayed'] = 0;
             this.attributes['my_ship'] = new Ship.Ship(50, [items.basicLaser, items.basicMissile], [items.basicShield]);
             this.attributes['enemy_ship'] = new Ship.Ship(30, [items.basicLaser], []);
         }
@@ -62,6 +64,11 @@ var newSessionHandlers = {
     'AMAZON.CancelIntent': function () {
         this.emit('SessionEndedRequest');
     },
+	'SessionEndedRequest': function() {
+		console.log('session ended!');
+		this.emit(':tell', 'Goodbye');
+	},
+
     'Unhandled': function() {
         this.emit(':ask', 'Sorry, I didn\'t get that. Try saying that again.', 'Try again.');
     }
@@ -127,6 +134,13 @@ var battleHandlers = Alexa.CreateStateHandler(states.BATTLE, {
     'AMAZON.CancelIntent': function () {
         this.emit('SessionEndedRequest');
     },
+	'SessionEndedRequest': function() {
+		console.log('session ended!');
+		var cardContent = 'Your ship\'s hull: ' + this.attributes['my_ship'].hull +
+            '\nThe enemy ship\'s hull: ' + this.attributes['enemy_ship'].hull;
+		this.emit(':tellWithCard', 'Thanks for playing', 'Starship battle report', cardContent);
+	},
+
     'Unhandled': function() {
         this.attributes['speechOutput'] = 'Sorry, I didn\'t get that. If you don\'t know what to do, you can ask <s>what are my options?</s>';
         this.attributes['repromptSpeech'] = 'If you don\'t know what to do, you can ask <s>what are my options?</s>';

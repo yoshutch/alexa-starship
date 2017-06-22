@@ -2,7 +2,7 @@ var Ship = function (hull, weapons, shields){
 	this.hull = hull;
     this.weapons = weapons;
     this.shields = shields;
-}
+};
 
 var beamAtk = function (ship){
 	var atkStr = 0;
