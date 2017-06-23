@@ -4,39 +4,50 @@ var Ship = function (hull, weapons, shields){
     this.shields = shields;
 };
 
-var beamAtk = function (ship){
-	var atkStr = 0;
-	for (var i = 0; i < ship.weapons.length; i ++) {
-		if (ship.weapons[i].beam_atk) {
-			atkStr += ship.weapons[i].beam_atk;
+var stats = function (ship) {
+	var beamAtk = 0;
+	var missileAtk = 0;
+	var railGunAtk = 0;
+	var beamDef = 0;
+	var missileDef = 0;
+	var railGunDef = 0;
+	var accuracy = 0.5;
+	var items = ship.weapons.concat(ship.shields);
+	for (var i = 0; i < items.length; i ++) {
+		var item = items[i];
+		if (item.beam_atk) {
+			beamAtk += item.beam_atk;
+		}
+		if (item.missile_atk) {
+			missileAtk += item.missile_atk;
+		}
+		if (item.rail_atk) {
+			railGunAtk += item.rail_atk;
+		}
+		if (item.beam_def) {
+			beamDef += item.beam_def;
+		}
+		if (item.missile_def) {
+			missileDef += item.missile_def;
+		}
+		if (item.rail_def) {
+			railGunDef += item.rail_def;
 		}
 	}
-	return atkStr;
-};
-var missileAtk = function (ship) {
-	var atkStr = 0;
-	for (var i = 0; i < ship.weapons.length; i ++) {
-		if (ship.weapons[i].missile_atk) {
-			atkStr += ship.weapons[i].missile_atk;
-		}
+	return {
+		beamAtk: beamAtk,
+		missileAtk: missileAtk,
+		railGunAtk: railGunAtk,
+		beamDef: beamDef,
+		missileDef: missileDef,
+		railGunDef: railGunDef,
+		accuracy: accuracy
 	}
-	return atkStr;
-};
-var railGunAtk = function (ship) {
-	var atkStr = 0;
-	for (var i = 0; i < ship.weapons.length; i ++) {
-		if (ship.weapons[i].rail_atk) {
-			atkStr += ship.weapons[i].rail_atk;
-		}
-	}
-	return atkStr;
 };
 
 module.exports = {
 	Ship: Ship,
-	beamAtk: beamAtk,
-	missileAtk: missileAtk,
-	railGunAtk: railGunAtk,
+	stats: stats,
 	equippedWeapons : function(ship) {
 		var equipped = {};
 		for (var i = 0; i < ship.weapons.length; i ++) {
