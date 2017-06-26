@@ -94,7 +94,7 @@ var startHandlers = Alexa.CreateStateHandler(states.START_MODE, {
 				this.attributes['speechOutput'] += 'and ';
 			}
 		}.bind(this));
-		this.attributes['speechOutput'] += '. An enemy pirate ship has powered up its weapons. The enemy ship\'s hull is ' + this.attributes['enemy_ship'].hull + '. What are your orders?';
+		this.attributes['speechOutput'] += '. An enemy pirate ship has powered up its weapons. What are your orders?';
 		this.attributes['repromptSpeech'] = 'If you don\'t know what to do, you can ask <s>what are my options?</s>';
 		this.emit(':ask', this.attributes['speechOutput'], this.attributes['repromptSpeech']);
 	},
@@ -146,7 +146,7 @@ var battleHandlers = Alexa.CreateStateHandler(states.BATTLE, {
 		this.attributes['my_ship'] = result.myShip;
 		this.attributes['enemy_ship'] = result.enemyShip;
 		this.attributes['speechOutput'] = buildBattleTurnResolutionSpeech(result);
-		if (result.enemyShipDestroyed || result.myShipDestroyed) {
+		if (result.enemyShipDestroyed || result.myShipDestroyed || result.myAtk.fleeSuccessful || result.enemyAtk.fleeSuccessful) {
 			console.log('ended');
 			this.emitWithState('BattleEnded'); // emit battle ended from battleHandlers
 		} else {
@@ -169,7 +169,7 @@ var battleHandlers = Alexa.CreateStateHandler(states.BATTLE, {
 		this.attributes['my_ship'] = result.myShip;
 		this.attributes['enemy_ship'] = result.enemyShip;
 		this.attributes['speechOutput'] = buildBattleTurnResolutionSpeech(result);
-		if (result.enemyShipDestroyed || result.myShipDestroyed) {
+		if (result.enemyShipDestroyed || result.myShipDestroyed || result.myAtk.fleeSuccessful || result.enemyAtk.fleeSuccessful) {
 			// console.log('ended');
 			this.emitWithState('BattleEnded');
 			return;
@@ -193,7 +193,7 @@ var battleHandlers = Alexa.CreateStateHandler(states.BATTLE, {
 		this.attributes['my_ship'] = result.myShip;
 		this.attributes['enemy_ship'] = result.enemyShip;
 		this.attributes['speechOutput'] = buildBattleTurnResolutionSpeech(result);
-		if (result.enemyShipDestroyed || result.myShipDestroyed) {
+		if (result.enemyShipDestroyed || result.myShipDestroyed || result.myAtk.fleeSuccessful || result.enemyAtk.fleeSuccessful) {
 			// console.log('ended');
 			this.emitWithState('BattleEnded');
 		} else {
@@ -202,6 +202,38 @@ var battleHandlers = Alexa.CreateStateHandler(states.BATTLE, {
 		this.attributes['repromptSpeech'] = 'If you don\'t know what to do, you can ask <s>what are my options?</s>';
         this.emit(':ask', this.attributes['speechOutput'], this.attributes['repromptSpeech']);
     },
+	'ScanIntent': function(){
+		var myShip = this.attributes['my_ship'];
+		var enemyShip = this.attributes['enemy_ship'];
+		var result = Battle.resolveTurn(myShip, Battle.SCAN_TYPE, enemyShip);
+		this.attributes['my_ship'] = result.myShip;
+		this.attributes['enemy_ship'] = result.enemyShip;
+		this.attributes['speechOutput'] = buildBattleTurnResolutionSpeech(result);
+		if (result.enemyShipDestroyed || result.myShipDestroyed || result.myAtk.fleeSuccessful || result.enemyAtk.fleeSuccessful) {
+			// console.log('ended');
+			this.emitWithState('BattleEnded');
+		} else {
+			this.attributes['speechOutput'] += ' What are your next orders?';
+		}
+		this.attributes['repromptSpeech'] = 'If you don\'t know what to do, you can ask <s>what are my options?</s>';
+		this.emit(':ask', this.attributes['speechOutput'], this.attributes['repromptSpeech']);
+	},
+	'FleeIntent': function(){
+		var myShip = this.attributes['my_ship'];
+		var enemyShip = this.attributes['enemy_ship'];
+		var result = Battle.resolveTurn(myShip, Battle.FLEE_TYPE, enemyShip);
+		this.attributes['my_ship'] = result.myShip;
+		this.attributes['enemy_ship'] = result.enemyShip;
+		this.attributes['speechOutput'] = buildBattleTurnResolutionSpeech(result);
+		if (result.enemyShipDestroyed || result.myShipDestroyed || result.myAtk.fleeSuccessful || result.enemyAtk.fleeSuccessful) {
+			// console.log('ended');
+			this.emitWithState('BattleEnded');
+		} else {
+			this.attributes['speechOutput'] += ' What are your next orders?';
+		}
+		this.attributes['repromptSpeech'] = 'If you don\'t know what to do, you can ask <s>what are my options?</s>';
+		this.emit(':ask', this.attributes['speechOutput'], this.attributes['repromptSpeech']);
+	},
 	'BattleEnded': function () {
 		// console.log('battle ended', this.handler.state);
     	this.attributes['speechOutput'] += ' This simulation is over. Would you like to try again?';
@@ -251,11 +283,42 @@ var buildBattleResultCard = function (myShip, enemyShip) {
 
 var buildBattleTurnResolutionSpeech = function (resolution) {
 	var speech = "";
-	//TODO implement scan and flee type message
+
+	if (resolution.enemyAtk.type === Battle.FLEE_TYPE) {
+		speech += 'The enemy ship is attempting to flee. ';
+	}
+
 	if (resolution.myAtk.type === Battle.SCAN_TYPE) {
-
+		speech += 'Scanning the enemy ship. ';
+		if (resolution.myAtk.scanSuccessful) {
+			speech += 'The enemy ship\'s hull integrity is ' + resolution.myAtk.scan.enemyHull + '. ';
+			var enemyStats = resolution.myAtk.scan.enemyStats;
+			if (enemyStats.beamAtk) {
+				speech += 'beam attack strength is ' + enemyStats.beamAtk + ', ';
+			}
+			if (enemyStats.missileAtk) {
+				speech += 'missile attack strength is ' + enemyStats.missileAtk + ', ';
+			}
+			if (enemyStats.railGunAtk) {
+				speech += 'rail gun attack strength is ' + enemyStats.railGunAtk + ', ';
+			}
+			if (enemyStats.beamDef) {
+				speech += 'beam defense is ' + enemyStats.beamDef + ', ';
+			}
+			if (enemyStats.missileDef) {
+				speech += 'missile defense is ' + enemyStats.missileDef + ', ';
+			}
+			if (enemyStats.railGunDef) {
+				speech += 'rail gun defense is ' + enemyStats.railGunDef + ', ';
+			}
+			if (enemyStats.accuracy) {
+				speech += 'and accuracy is ' + enemyStats.accuracy + '. ';
+			}
+		} else {
+			speech += 'Scan was unsuccessful. ';
+		}
 	} else if (resolution.myAtk.type === Battle.FLEE_TYPE) {
-
+		speech += 'Attempting to flee. ';
 	} else {
 		speech += 'Firing ' + resolution.myAtk.type + '. ';
 		//TODO add sound effects?
@@ -277,11 +340,11 @@ var buildBattleTurnResolutionSpeech = function (resolution) {
 
 	//TODO implement scan and flee type message from the enemy
 	if (resolution.enemyAtk.type === Battle.SCAN_TYPE) {
-
+		speech += 'The enemy ship is scanning us. ';
 	} else if (resolution.enemyAtk.type === Battle.FLEE_TYPE) {
 
 	} else {
-		speech += "The enemy ship fired " + resolution.enemyAtk.type + ". ";
+		speech += 'The enemy ship fired ' + resolution.enemyAtk.type + '. ';
 		//TODO add sound effects?
 		if (resolution.enemyAtk.hit) {
 			if (resolution.myShipDestroyed) {
@@ -298,6 +361,19 @@ var buildBattleTurnResolutionSpeech = function (resolution) {
 		} else {
 			speech += 'They missed us. ';
 		}
+	}
+
+	if (resolution.myAtk.fleeSuccessful && resolution.enemyAtk.fleeSuccessful) {
+		speech += 'We have fled successfully. ';
+	} else if (resolution.myAtk.fleeSuccessful) {
+		speech += 'We have fled successfully. ';
+	}  else if (resolution.myAtk.fleeAttempt && !resolution.myAtk.fleeSuccessful) {
+		speech += 'We couldn\'t flee. The enemy ship is still following us. '
+	}
+	if (resolution.enemyAtk.fleeSuccessful) {
+		speech += 'The enemy ship has fled successfully. ';
+	} else if (resolution.enemyAtk.fleeAttempt && !resolution.enemyAtk.fleeSuccessful) {
+		speech += 'The enemy ship couldn\'t flee. ';
 	}
 	return speech;
 };
