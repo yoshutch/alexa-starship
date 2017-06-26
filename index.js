@@ -27,7 +27,8 @@ var newSessionHandlers = {
         }
         this.handler.state = states.START_MODE;
         this.emit(':ask', 
-            'Welcome aboard captain. I am the starship on-board computer. This is a starship battle simulation. Would you like to begin the simulation?',
+            'Welcome aboard captain. I am the starship on-board computer. This is a starship battle simulation. ' +
+			'Would you like to begin the simulation?',
             'Would you like to begin the starship battle simulation?');
     },
 
@@ -94,7 +95,11 @@ var startHandlers = Alexa.CreateStateHandler(states.START_MODE, {
 				this.attributes['speechOutput'] += 'and ';
 			}
 		}.bind(this));
-		this.attributes['speechOutput'] += '. An enemy pirate ship has powered up its weapons. What are your orders?';
+		this.attributes['speechOutput'] += '. An enemy pirate ship has powered up its weapons. ' +
+			'<audio src="https://s3.amazonaws.com/tsatsatzu-alexa/sound/beeps/CRASHBUZ.mp3" />' +
+			'<audio src="https://s3.amazonaws.com/tsatsatzu-alexa/sound/beeps/CRASHBUZ.mp3" />' +
+			'<audio src="https://s3.amazonaws.com/tsatsatzu-alexa/sound/beeps/CRASHBUZ.mp3" />' +
+			'What are your orders?';
 		this.attributes['repromptSpeech'] = 'If you don\'t know what to do, you can ask <s>what are my options?</s>';
 		this.emit(':ask', this.attributes['speechOutput'], this.attributes['repromptSpeech']);
 	},
@@ -290,6 +295,7 @@ var buildBattleTurnResolutionSpeech = function (resolution) {
 
 	if (resolution.myAtk.type === Battle.SCAN_TYPE) {
 		speech += 'Scanning the enemy ship. ';
+		speech += audioOfAtkType(resolution.myAtk.type);
 		if (resolution.myAtk.scanSuccessful) {
 			speech += 'The enemy ship\'s hull integrity is ' + resolution.myAtk.scan.enemyHull + '. ';
 			var enemyStats = resolution.myAtk.scan.enemyStats;
@@ -321,7 +327,7 @@ var buildBattleTurnResolutionSpeech = function (resolution) {
 		speech += 'Attempting to flee. ';
 	} else {
 		speech += 'Firing ' + resolution.myAtk.type + '. ';
-		//TODO add sound effects?
+		speech += audioOfAtkType(resolution.myAtk.type);
 		if (resolution.myAtk.hit) {
 			if (resolution.enemyShipDestroyed) {
 				speech += 'Direct hit! We destroyed the enemy ship, congratulations captain.';
@@ -341,11 +347,12 @@ var buildBattleTurnResolutionSpeech = function (resolution) {
 	//TODO implement scan and flee type message from the enemy
 	if (resolution.enemyAtk.type === Battle.SCAN_TYPE) {
 		speech += 'The enemy ship is scanning us. ';
+		speech += audioOfAtkType(resolution.enemyAtk.type);
 	} else if (resolution.enemyAtk.type === Battle.FLEE_TYPE) {
 
 	} else {
 		speech += 'The enemy ship fired ' + resolution.enemyAtk.type + '. ';
-		//TODO add sound effects?
+		speech += audioOfAtkType(resolution.enemyAtk.type);
 		if (resolution.enemyAtk.hit) {
 			if (resolution.myShipDestroyed) {
 				speech += 'A major hull breach in our ship, captain. We\'ve lost life support systems and engines. ' +
@@ -365,15 +372,32 @@ var buildBattleTurnResolutionSpeech = function (resolution) {
 
 	if (resolution.myAtk.fleeSuccessful && resolution.enemyAtk.fleeSuccessful) {
 		speech += 'We have fled successfully. ';
+		speech += audioOfAtkType(Battle.FLEE_TYPE);
 	} else if (resolution.myAtk.fleeSuccessful) {
 		speech += 'We have fled successfully. ';
+		speech += audioOfAtkType(Battle.FLEE_TYPE);
 	}  else if (resolution.myAtk.fleeAttempt && !resolution.myAtk.fleeSuccessful) {
 		speech += 'We couldn\'t flee. The enemy ship is still following us. '
 	}
 	if (resolution.enemyAtk.fleeSuccessful) {
 		speech += 'The enemy ship has fled successfully. ';
+		speech += audioOfAtkType(Battle.FLEE_TYPE);
 	} else if (resolution.enemyAtk.fleeAttempt && !resolution.enemyAtk.fleeSuccessful) {
 		speech += 'The enemy ship couldn\'t flee. ';
 	}
 	return speech;
+};
+
+var audioOfAtkType = function (atkType) {
+	if (atkType === Battle.BEAM_TYPE) {
+		return '<audio src="https://s3.amazonaws.com/tsatsatzu-alexa/sound/tech/PLASMAL.mp3" />';
+	} else if (atkType === Battle.MISSILE_TYPE) {
+		return '<audio src="https://s3.amazonaws.com/tsatsatzu-alexa/sound/tech/ELECTRI.mp3" />';
+	} else if (atkType === Battle.RAIL_GUN_TYPE) {
+		return '<audio src="https://s3.amazonaws.com/tsatsatzu-alexa/sound/space/ZING.mp3" />';
+	} else if (atkType === Battle.SCAN_TYPE) {
+		return '<audio src="https://s3.amazonaws.com/tsatsatzu-alexa/sound/misc/WOWBEEP.mp3" /><audio src="https://s3.amazonaws.com/tsatsatzu-alexa/sound/beeps/DOUBLE.mp3" />';
+	} else if (atkType === Battle.FLEE_TYPE) {
+		return '<audio src="https://s3.amazonaws.com/tsatsatzu-alexa/sound/misc/WHOOSH.mp3" />';
+	}
 };
