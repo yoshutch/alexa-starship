@@ -1,7 +1,13 @@
-var Ship = function (hull, weapons, shields){
+var Ship = function (hull, weapons, defences){
 	this.hull = hull;
     this.weapons = weapons;
-    this.shields = shields;
+    this.defences = defences;
+    this.shields = {
+    	beam: 0,
+		missile: 0,
+		railGun: 0
+	};
+    rechargeShields(this);
 };
 
 var stats = function (ship) {
@@ -12,7 +18,7 @@ var stats = function (ship) {
 	var missileDef = 0;
 	var railGunDef = 0;
 	var accuracy = 0.5;
-	var items = ship.weapons.concat(ship.shields);
+	var items = ship.weapons.concat(ship.defences);
 	for (var i = 0; i < items.length; i ++) {
 		var item = items[i];
 		if (item.beam_atk) {
@@ -45,6 +51,13 @@ var stats = function (ship) {
 	}
 };
 
+var rechargeShields = function(ship) {
+	var shipStats = stats(ship);
+	ship.shields.beam = shipStats.beamDef;
+	ship.shields.missile = shipStats.missileDef;
+	ship.shields.railGun = shipStats.railGunDef;
+};
+
 module.exports = {
 	Ship: Ship,
 	stats: stats,
@@ -58,5 +71,6 @@ module.exports = {
 			}
 		}
 		return equipped;
-	}
+	},
+	rechargeShields: rechargeShields
 };

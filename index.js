@@ -65,9 +65,9 @@ var startHandlers = Alexa.CreateStateHandler(states.START_MODE, {
 			this.emitWithState('NewSession');
 		}
 		this.handler.state = states.BATTLE;
-		var myShip = new Ship.Ship(50, [Items.randomWeapon(), Items.randomWeapon()], [Items.basicShield]);
+		var myShip = new Ship.Ship(50, [Items.randomWeapon(), Items.randomWeapon()], [Items.randomDefense()]);
 		this.attributes['my_ship'] = myShip;
-		this.attributes['enemy_ship'] = new Ship.Ship(30, [Items.randomWeapon()], []);
+		this.attributes['enemy_ship'] = new Ship.Ship(50, [Items.randomWeapon(), Items.randomWeapon()], [Items.randomDefense()]);
 		this.attributes['options'] = [];
 		var stats = Ship.stats(this.attributes['my_ship']);
 		if (stats.beamAtk) {
@@ -81,21 +81,22 @@ var startHandlers = Alexa.CreateStateHandler(states.START_MODE, {
 		}
 		this.attributes['options'].push('Scan the enemy ship');
 		this.attributes['options'].push('Attempt to flee');
-		this.attributes['speechOutput'] = 'Our ship is equipped with ';
-		var equipped = Ship.equippedWeapons(myShip);
-		Object.keys(equipped).forEach(function(weapon, index){
-			this.attributes['speechOutput'] += equipped[weapon] + ' ' + weapon;
-			if (equipped[weapon] > 1){
-				this.attributes['speechOutput'] += 's';
-			}
-			if (index !== Object.keys(equipped).length -1) {
-				this.attributes['speechOutput'] += ', ';
-			}
-			if (index === Object.keys(equipped).length - 2) {
-				this.attributes['speechOutput'] += 'and ';
-			}
-		}.bind(this));
-		this.attributes['speechOutput'] += '. An enemy pirate ship has powered up its weapons. ' +
+		// this.attributes['speechOutput'] = 'Our ship is equipped with ';
+		// var equipped = Ship.equippedWeapons(myShip);
+		// Object.keys(equipped).forEach(function(weapon, index){
+		// 	this.attributes['speechOutput'] += equipped[weapon] + ' ' + weapon;
+		// 	if (equipped[weapon] > 1){
+		// 		this.attributes['speechOutput'] += 's';
+		// 	}
+		// 	if (index !== Object.keys(equipped).length -1) {
+		// 		this.attributes['speechOutput'] += ', ';
+		// 	}
+		// 	if (index === Object.keys(equipped).length - 2) {
+		// 		this.attributes['speechOutput'] += 'and ';
+		// 	}
+		// }.bind(this));
+		this.attributes['speechOutput'] = 'Our ship\'s ' + buildScanSpeech(myShip);
+		this.attributes['speechOutput'] += 'An enemy pirate ship has powered up its weapons. ' +
 			'<audio src="https://s3.amazonaws.com/tsatsatzu-alexa/sound/beeps/CRASHBUZ.mp3" />' +
 			'<audio src="https://s3.amazonaws.com/tsatsatzu-alexa/sound/beeps/CRASHBUZ.mp3" />' +
 			'<audio src="https://s3.amazonaws.com/tsatsatzu-alexa/sound/beeps/CRASHBUZ.mp3" />' +
@@ -297,29 +298,7 @@ var buildBattleTurnResolutionSpeech = function (resolution) {
 		speech += 'Scanning the enemy ship. ';
 		speech += audioOfAtkType(resolution.myAtk.type);
 		if (resolution.myAtk.scanSuccessful) {
-			speech += 'The enemy ship\'s hull integrity is ' + resolution.myAtk.scan.enemyHull + '. ';
-			var enemyStats = resolution.myAtk.scan.enemyStats;
-			if (enemyStats.beamAtk) {
-				speech += 'beam attack strength is ' + enemyStats.beamAtk + ', ';
-			}
-			if (enemyStats.missileAtk) {
-				speech += 'missile attack strength is ' + enemyStats.missileAtk + ', ';
-			}
-			if (enemyStats.railGunAtk) {
-				speech += 'rail gun attack strength is ' + enemyStats.railGunAtk + ', ';
-			}
-			if (enemyStats.beamDef) {
-				speech += 'beam defense is ' + enemyStats.beamDef + ', ';
-			}
-			if (enemyStats.missileDef) {
-				speech += 'missile defense is ' + enemyStats.missileDef + ', ';
-			}
-			if (enemyStats.railGunDef) {
-				speech += 'rail gun defense is ' + enemyStats.railGunDef + ', ';
-			}
-			if (enemyStats.accuracy) {
-				speech += 'and accuracy is ' + enemyStats.accuracy + '. ';
-			}
+			speech += 'The enemy ship\'s ' + buildScanSpeech(resolution.enemyShip);
 		} else {
 			speech += 'Scan was unsuccessful. ';
 		}
@@ -333,11 +312,11 @@ var buildBattleTurnResolutionSpeech = function (resolution) {
 				speech += 'Direct hit! We destroyed the enemy ship, congratulations captain.';
 				return speech;
 			} else if (resolution.myAtk.critical) {
-				speech += 'Critical hit, captain! ';
+				speech += 'Critical hit! ';
 			} else if (resolution.myAtk.notCritical) {
-				speech += 'We barely hit the enemy ship, captain. ';
+				speech += 'We barely hit the enemy ship. ';
 			} else {
-				speech += 'Direct hit, captain. ';
+				speech += 'Direct hit. ';
 			}
 		} else {
 			speech += 'We missed. ';
@@ -355,16 +334,42 @@ var buildBattleTurnResolutionSpeech = function (resolution) {
 		speech += audioOfAtkType(resolution.enemyAtk.type);
 		if (resolution.enemyAtk.hit) {
 			if (resolution.myShipDestroyed) {
-				speech += 'A major hull breach in our ship, captain. We\'ve lost life support systems and engines. ' +
+				speech += 'A major hull breach in our ship. We\'ve lost life support systems and engines. ' +
 					'We have been destroyed.';
 				return speech;
 			} else if (resolution.enemyAtk.critical) {
-				speech += 'Critical hit! We have sustained ' + resolution.enemyAtk.dmg + ' hull damage. Our hull integrity is at ' + resolution.myShip.hull + '. ';
+				speech += 'Critical hit! ';
 			} else if (resolution.enemyAtk.notCritical) {
-				speech += 'We were barely hit for ' + resolution.enemyAtk.dmg + ' hull damage. Our hull integrity is at ' + resolution.myShip.hull + '. ';
+				speech += 'We were barely hit. ';
 			} else {
-				speech += 'We were hit for ' + resolution.enemyAtk.dmg + ' hull damage. Our hull integrity is at ' + resolution.myShip.hull + '. ';
+				speech += 'We were hit. ';
 			}
+			if (resolution.myDmgResult.beamShieldDmg) {
+				speech += 'Our beam shields took ' + resolution.myDmgResult.beamShieldDmg + ' damage. ';
+				if (resolution.myShip.shields.beam <= 0) {
+					speech += 'Our beam shields were depleted. ';
+				} else {
+					speech += 'Our beam shields are at ' + resolution.myShip.shields.beam + '. ';
+				}
+			} else if (resolution.myDmgResult.missileShieldDmg) {
+				speech += 'Our missile shields took ' + resolution.myDmgResult.missileShieldDmg + ' damage. ';
+				if (resolution.myShip.shields.missile <= 0) {
+					speech += 'Our missile shields were depleted. ';
+				} else {
+					speech += 'Our missile shields are at ' + resolution.myShip.shields.missile + '. ';
+				}
+			} else if (resolution.myDmgResult.railGunShieldDmg) {
+				speech += 'Our rail gun shields took ' + resolution.myDmgResult.railGunShieldDmg + ' damage. ';
+				if (resolution.myShip.shields.railGun <= 0) {
+					speech += 'Our rail gun shields were depleted. ';
+				} else {
+					speech += 'Our rail gun shields are at ' + resolution.myShip.shields.railGun + '. ';
+				}
+			}
+			if (resolution.myDmgResult.hullDmg > 0) {
+				speech += 'We sustained ' + resolution.myDmgResult.hullDmg + ' hull damage. Our hull integrity is at ' + resolution.myShip.hull + '. ';
+			}
+
 		} else {
 			speech += 'They missed us. ';
 		}
@@ -384,6 +389,33 @@ var buildBattleTurnResolutionSpeech = function (resolution) {
 		speech += audioOfAtkType(Battle.FLEE_TYPE);
 	} else if (resolution.enemyAtk.fleeAttempt && !resolution.enemyAtk.fleeSuccessful) {
 		speech += 'The enemy ship couldn\'t flee. ';
+	}
+	return speech;
+};
+
+var buildScanSpeech = function (ship) {
+	var shipStats = Ship.stats(ship);
+	var speech = 'hull integrity is ' + ship.hull + '. ';
+	if (shipStats.beamAtk) {
+		speech += 'beam attack strength is ' + shipStats.beamAtk + ', ';
+	}
+	if (shipStats.missileAtk) {
+		speech += 'missile attack strength is ' + shipStats.missileAtk + ', ';
+	}
+	if (shipStats.railGunAtk) {
+		speech += 'rail gun attack strength is ' + shipStats.railGunAtk + ', ';
+	}
+	if (ship.shields.beam) {
+		speech += 'beam shields are ' + ship.shields.beam + ', ';
+	}
+	if (ship.shields.missile) {
+		speech += 'missile shields are ' + ship.shields.missile + ', ';
+	}
+	if (ship.shields.railGun) {
+		speech += 'rail gun shields are ' + ship.shields.railGun + ', ';
+	}
+	if (shipStats.accuracy) {
+		speech += 'and accuracy is ' + shipStats.accuracy + '. ';
 	}
 	return speech;
 };
