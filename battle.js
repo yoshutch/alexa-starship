@@ -12,10 +12,13 @@ const NOT_CRITICAL_RATE = 0.5;
 const CRITICAL_THRESHOLD = 0.8;
 const NOT_CRITICAL_THRESHOLD = 0.1;
 const FLEE_THRESHOLD = 0.3;
+const AI_FLEE_THRESHOLD = 20;
+const AI_FLEE_PROBABILITY = 0.5;
+const AI_SCAN_PROBABILITY = 0.2;
 
 var resolveTurn = function (myShip, myAtkType, enemyShip, enemyAtkType) {
 	if (!enemyAtkType) {
-		enemyAtkType = randomAtkType(enemyShip)
+		enemyAtkType = enemyAiChooseTurn(enemyShip)
 	}
 	// var myAtk = resolveAtkPower(myShip, myAtkType, enemyAtkType);
 	// var enemyAtk = resolveAtkPower(enemyShip, enemyAtkType, myAtkType);
@@ -277,6 +280,18 @@ var resolveAtkPower = function(ship, shipAtkType, enemyAtkType) {
 		}
 	}
 	return atk;
+};
+
+var enemyAiChooseTurn = function (ship) {
+	if (ship.hull <= AI_FLEE_THRESHOLD) {
+		if (Math.random() <= AI_FLEE_PROBABILITY) {
+			return FLEE_TYPE;
+		}
+	}
+	if (Math.random() <= AI_SCAN_PROBABILITY) {
+		return SCAN_TYPE;
+	}
+	return randomAtkType(ship);
 };
 
 var randomAtkType = function (ship) {
