@@ -50,7 +50,7 @@ var newSessionHandlers = {
     },
 	'SessionEndedRequest': function() {
 		// console.log('session ended!', this.handler.state);
-		this.emit(':tell', 'Thanks for playing');
+		this.emit(':tell', 'Thanks for playing. Visit us facebook.com/AlexaStarship for tips and improvement requests. Goodbye.');
 	},
 
     'Unhandled': function() {
@@ -280,7 +280,8 @@ var battleHandlers = Alexa.CreateStateHandler(states.BATTLE, {
 
 var buildBattleResultCard = function (myShip, enemyShip) {
 	var content = 'Your ship\'s hull: ' + myShip.hull +
-	'\nThe enemy ship\'s hull: ' + enemyShip.hull;
+	'\nThe enemy ship\'s hull: ' + enemyShip.hull +
+	'\n\nVisit https://facebook.com/AlexaStarship for tips';
 	return {
 		title : 'Starship battle report',
 		content: content
