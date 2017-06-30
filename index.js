@@ -21,20 +21,23 @@ exports.handler = function(event, context, callback) {
 
 var newSessionHandlers = {
     'NewSession': function() {
-        if (Object.keys(this.attributes).length === 0) { // check if it's the first time the skill has been invoked
+        // console.log('new session', this.handler.state);
+    	if (Object.keys(this.attributes).length === 0) { // check if it's the first time the skill has been invoked
 			this.attributes['endedSessionCount'] = 0;
 			this.attributes['gamesPlayed'] = 0;
         }
         this.handler.state = states.START_MODE;
-        this.emit(':ask', 
-            'Welcome aboard captain. I am the starship on-board computer. This is a starship battle simulation. ' +
-			'Would you like to begin the simulation?',
-            'Would you like to begin the starship battle simulation?');
+    	this.emitWithState('StartBattle');
     },
 
     'StartBattle': function() {
 		// console.log('start battle', this.handler.state);
-    	this.emit('Unhandled');
+    	if (Object.keys(this.attributes).length === 0) { // check if it's the first time the skill has been invoked
+			this.attributes['endedSessionCount'] = 0;
+			this.attributes['gamesPlayed'] = 0;
+        }
+        this.handler.state = states.START_MODE;
+    	this.emitWithState('StartBattle');
     },
 
     'AMAZON.HelpIntent': function () {
@@ -60,10 +63,6 @@ var newSessionHandlers = {
 
 var startHandlers = Alexa.CreateStateHandler(states.START_MODE, {
 	'StartBattle': function() {
-		// console.log('start battle', this.handler.state);
-		if (Object.keys(this.attributes).length === 0) { // check if it's the first time the skill has been invoked
-			this.emitWithState('NewSession');
-		}
 		this.handler.state = states.BATTLE;
 		var myShip = new Ship.Ship(50, [Items.randomWeapon(), Items.randomWeapon()], [Items.randomDefense()]);
 		this.attributes['my_ship'] = myShip;
@@ -95,8 +94,8 @@ var startHandlers = Alexa.CreateStateHandler(states.START_MODE, {
 		// 		this.attributes['speechOutput'] += 'and ';
 		// 	}
 		// }.bind(this));
-		this.attributes['speechOutput'] = 'Our ship\'s ' + buildScanSpeech(myShip);
-		this.attributes['speechOutput'] += 'An enemy pirate ship has powered up its weapons. ' +
+		this.attributes['speechOutput'] = 'Welcome aboard captain. Our ship\'s ' + buildScanSpeech(myShip);
+		this.attributes['speechOutput'] += '<break time="10ms"/> An enemy pirate ship has powered up its weapons. ' +
 			'<audio src="https://s3.amazonaws.com/tsatsatzu-alexa/sound/beeps/CRASHBUZ.mp3" />' +
 			'<audio src="https://s3.amazonaws.com/tsatsatzu-alexa/sound/beeps/CRASHBUZ.mp3" />' +
 			'<audio src="https://s3.amazonaws.com/tsatsatzu-alexa/sound/beeps/CRASHBUZ.mp3" />' +
